@@ -1,6 +1,6 @@
-
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 app = FastAPI(
     title="Ashar JARVIS",
@@ -15,6 +15,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+class ChatRequest(BaseModel):
+    message: str
+
 @app.get("/")
 def home():
     return {
@@ -26,3 +29,21 @@ def home():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+@app.post("/chat")
+def chat(request: ChatRequest):
+
+    message = request.message.strip()
+
+    if not message:
+        raise HTTPException(
+            status_code=400,
+            detail="Message cannot be empty"
+        )
+
+    return {
+        "status": "success",
+        "user_message": message,
+        "reply": "Hello Ashar! I received your message. My AI brain is not connected yet."
+    }
+    
