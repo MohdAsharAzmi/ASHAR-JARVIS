@@ -23,6 +23,8 @@ app.add_middleware(
 
 class ChatRequest(BaseModel):
     message: str
+    language: str = "hinglish"
+    personality: str = "professional"
 
 
 @app.get("/")
@@ -36,13 +38,12 @@ def home():
 
 @app.get("/health")
 def health():
-    return {
-        "status": "healthy"
-    }
+    return {"status": "healthy"}
 
 
 @app.post("/chat")
 def chat(request: ChatRequest):
+
     message = request.message.strip()
 
     if not message:
@@ -51,11 +52,17 @@ def chat(request: ChatRequest):
             detail="Message cannot be empty"
         )
 
-    reply = generate_reply(message)
+    reply = generate_reply(
+        message,
+        request.language,
+        request.personality
+    )
 
     return {
         "status": "success",
         "user_message": message,
+        "language": request.language,
+        "personality": request.personality,
         "reply": reply
     }
     
