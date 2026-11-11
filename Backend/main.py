@@ -1,7 +1,7 @@
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from core.brain import generate_reply
 
@@ -11,7 +11,6 @@ app = FastAPI(
     description="Personal AI Assistant API",
     version="1.0.0"
 )
-
 
 app.add_middleware(
     CORSMiddleware,
@@ -25,6 +24,7 @@ class ChatRequest(BaseModel):
     message: str
     language: str = "hinglish"
     personality: str = "professional"
+    history: list[dict] = Field(default_factory=list)
 
 
 @app.get("/")
@@ -43,7 +43,6 @@ def health():
 
 @app.post("/chat")
 def chat(request: ChatRequest):
-
     message = request.message.strip()
 
     if not message:
@@ -52,10 +51,13 @@ def chat(request: ChatRequest):
             detail="Message cannot be empty"
         )
 
+    history = request.history[-10:]
+
     reply = generate_reply(
-        message,
-        request.language,
-        request.personality
+        message=message,
+        language=request.language,
+        personality=request.personality,
+        history=history
     )
 
     return {
@@ -63,6 +65,7 @@ def chat(request: ChatRequest):
         "user_message": message,
         "language": request.language,
         "personality": request.personality,
+        "history_received": len(history),
         "reply": reply
     }
     
