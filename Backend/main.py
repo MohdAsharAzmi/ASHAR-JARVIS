@@ -1,9 +1,11 @@
+
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from core.brain import generate_reply
 from core.agents import agent_manager
+from core.providers import get_provider_status
 
 
 app = FastAPI(
@@ -54,6 +56,11 @@ def get_agents():
         "total_agents": len(agents),
         "available_agents": agents
     }
+
+
+@app.get("/provider")
+def provider_status():
+    return get_provider_status()
 
 
 @app.post("/chat")
