@@ -30,6 +30,24 @@ class CodingAgent:
         }
 
 
+class CreativeAgent:
+
+    def run(self, task: str = "", media_type: str = "image", **kwargs):
+        return {
+            "agent": "creative",
+            "status": "registered",
+            "task": task,
+            "media_type": media_type,
+            "capabilities": [
+                "image_generation",
+                "image_editing",
+                "image_to_video",
+                "text_to_video"
+            ],
+            "message": "Creative AI models are not connected yet."
+        }
+
+
 class AgentManager:
 
     def __init__(self):
@@ -48,14 +66,10 @@ class AgentManager:
         agent = self.get_agent(name)
 
         if agent is None:
-            raise ValueError(
-                "Agent not found: " + name
-            )
+            raise ValueError("Agent not found: " + name)
 
         if not hasattr(agent, "run"):
-            raise TypeError(
-                "Agent does not have a run method"
-            )
+            raise TypeError("Agent does not have a run method")
 
         return agent.run(**kwargs)
 
@@ -65,3 +79,4 @@ agent_manager = AgentManager()
 agent_manager.register_agent("general", GeneralAgent())
 agent_manager.register_agent("research", ResearchAgent())
 agent_manager.register_agent("coding", CodingAgent())
+agent_manager.register_agent("creative", CreativeAgent())
