@@ -54,8 +54,7 @@ class OpenAICompatibleProvider(BaseProvider):
         history
     ):
         raise RuntimeError(
-            "AI provider is not activated yet. "
-            "Provider configuration and authorization are required."
+            "AI provider is not activated yet."
         )
 
 
@@ -75,4 +74,40 @@ def get_ai_provider():
     raise ValueError(
         "Unsupported AI provider: " + provider_name
     )
+
+
+def get_provider_status():
+
+    provider_name = os.getenv(
+        "AI_PROVIDER",
+        "demo"
+    ).lower()
+
+    model_name = os.getenv(
+        "AI_MODEL",
+        "not-selected"
+    )
+
+    if provider_name == "demo":
+        return {
+            "provider": "demo",
+            "model": "demo-model",
+            "status": "active",
+            "real_ai_connected": False
+        }
+
+    if provider_name == "openai":
+        return {
+            "provider": "openai",
+            "model": model_name,
+            "status": "configuration_only",
+            "real_ai_connected": False
+        }
+
+    return {
+        "provider": provider_name,
+        "model": model_name,
+        "status": "unsupported",
+        "real_ai_connected": False
+    }
     
