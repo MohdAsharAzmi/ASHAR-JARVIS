@@ -1,15 +1,10 @@
 
 class GeneralAgent:
-
     def run(self, **kwargs):
-        return {
-            "agent": "general",
-            "status": "ready"
-        }
+        return {"agent": "general", "status": "ready"}
 
 
 class ResearchAgent:
-
     def run(self, task: str = "", **kwargs):
         return {
             "agent": "research",
@@ -20,7 +15,6 @@ class ResearchAgent:
 
 
 class CodingAgent:
-
     def run(self, task: str = "", **kwargs):
         return {
             "agent": "coding",
@@ -31,20 +25,23 @@ class CodingAgent:
 
 
 class CreativeAgent:
-
     def run(self, task: str = "", media_type: str = "image", **kwargs):
         return {
             "agent": "creative",
             "status": "registered",
             "task": task,
             "media_type": media_type,
-            "capabilities": [
-                "image_generation",
-                "image_editing",
-                "image_to_video",
-                "text_to_video"
-            ],
-            "message": "Creative AI models are not connected yet."
+            "message": "Creative models are not connected yet."
+        }
+
+
+class MemoryAgent:
+    def run(self, action: str = "status", **kwargs):
+        return {
+            "agent": "memory",
+            "status": "registered",
+            "action": action,
+            "message": "Persistent memory storage is not connected yet."
         }
 
 
@@ -80,3 +77,4 @@ agent_manager.register_agent("general", GeneralAgent())
 agent_manager.register_agent("research", ResearchAgent())
 agent_manager.register_agent("coding", CodingAgent())
 agent_manager.register_agent("creative", CreativeAgent())
+agent_manager.register_agent("memory", MemoryAgent())
