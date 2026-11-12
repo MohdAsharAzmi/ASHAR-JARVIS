@@ -19,6 +19,17 @@ class ResearchAgent:
         }
 
 
+class CodingAgent:
+
+    def run(self, task: str = "", **kwargs):
+        return {
+            "agent": "coding",
+            "status": "registered",
+            "task": task,
+            "message": "Coding capabilities are not connected yet."
+        }
+
+
 class AgentManager:
 
     def __init__(self):
@@ -51,12 +62,6 @@ class AgentManager:
 
 agent_manager = AgentManager()
 
-agent_manager.register_agent(
-    "general",
-    GeneralAgent()
-)
-
-agent_manager.register_agent(
-    "research",
-    ResearchAgent()
-)
+agent_manager.register_agent("general", GeneralAgent())
+agent_manager.register_agent("research", ResearchAgent())
+agent_manager.register_agent("coding", CodingAgent())
