@@ -47,9 +47,10 @@ def generate_reply(
     if agent is None:
         return "JARVIS agent is unavailable."
 
-    return agent.run(
-        message=message,
-        language=language,
-        personality=personality,
-        history=history
+    return agent_manager.run_agent(
+    "general",
+    message=message,
+    language=language,
+    personality=personality,
+    history=history
     )
