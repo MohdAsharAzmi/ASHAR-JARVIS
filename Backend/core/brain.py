@@ -1,5 +1,32 @@
 
 from core.providers import get_ai_provider
+from core.agents import agent_manager
+
+
+class GeneralAgent:
+
+    def run(
+        self,
+        message,
+        language,
+        personality,
+        history
+    ):
+        provider = get_ai_provider()
+
+        return provider.generate(
+            message=message,
+            language=language,
+            personality=personality,
+            history=history
+        )
+
+
+# Register the general agent
+agent_manager.register_agent(
+    "general",
+    GeneralAgent()
+)
 
 
 def generate_reply(
@@ -15,15 +42,14 @@ def generate_reply(
     if not message:
         return "Please tell me something."
 
-    # Select the AI provider
-    provider = get_ai_provider()
+    agent = agent_manager.get_agent("general")
 
-    # Generate response
-    reply = provider.generate(
+    if agent is None:
+        return "JARVIS agent is unavailable."
+
+    return agent.run(
         message=message,
         language=language,
         personality=personality,
         history=history
     )
-
-    return reply
