@@ -1,3 +1,7 @@
+
+from core.providers import get_ai_provider
+
+
 def generate_reply(
     message: str,
     language: str = "hinglish",
@@ -11,17 +15,15 @@ def generate_reply(
     if not message:
         return "Please tell me something."
 
-    previous_count = len(history)
+    # Select the AI provider
+    provider = get_ai_provider()
 
-    return (
-        "JARVIS received your message: "
-        + message
-        + ". Language preference: "
-        + language
-        + ". Personality: "
-        + personality
-        + ". Previous messages received: "
-        + str(previous_count)
-        + ". Actual AI brain is not connected yet."
+    # Generate response
+    reply = provider.generate(
+        message=message,
+        language=language,
+        personality=personality,
+        history=history
     )
-    
+
+    return reply
