@@ -1,4 +1,6 @@
 
+import re
+
 from core.providers import get_ai_provider
 from core.agents import agent_manager
 
@@ -22,58 +24,117 @@ class GeneralAgent:
         )
 
 
-# Register the general agent
+# Connect General Agent to the AI Brain
 agent_manager.register_agent(
     "general",
     GeneralAgent()
 )
 
 
+AGENT_KEYWORDS = {
+
+    "research": [
+        "research",
+        "search",
+        "internet",
+        "find information",
+        "look up",
+        "maloomat",
+        "talash",
+        "khojo",
+        "jaankari",
+        "jankari",
+        "kis bare mein",
+        "ke baare mein batao"
+    ],
+
+    "coding": [
+        "code",
+        "coding",
+        "program",
+        "python",
+        "javascript",
+        "html",
+        "css",
+        "debug",
+        "error",
+        "bug",
+        "website",
+        "web development",
+        "programming",
+        "code likho",
+        "code banao"
+    ],
+
+    "creative": [
+        "image",
+        "photo",
+        "picture",
+        "video",
+        "animation",
+        "generate image",
+        "edit image",
+        "tasveer",
+        "design",
+        "poster",
+        "thumbnail"
+    ],
+
+    "memory": [
+        "remember",
+        "save this",
+        "forget",
+        "memory",
+        "yaad rakh",
+        "yaad rakho",
+        "bhool jao",
+        "save kar lo",
+        "delete memory"
+    ]
+}
+
+
+def count_matches(text, keywords):
+
+    score = 0
+
+    for keyword in keywords:
+
+        if " " in keyword:
+            if keyword in text:
+                score += 2
+
+        else:
+            pattern = r"\b" + re.escape(keyword) + r"\b"
+
+            if re.search(pattern, text):
+                score += 1
+
+    return score
+
+
 def select_agent(message: str) -> str:
 
-    text = message.lower()
+    text = message.lower().strip()
 
-    # Research tasks
-    research_words = [
-        "research", "search", "internet",
-        "find information", "look up",
-        "maloomat", "talash", "khojo"
-    ]
+    scores = {}
 
-    # Coding tasks
-    coding_words = [
-        "code", "coding", "program",
-        "python", "javascript", "html",
-        "css", "debug", "error", "bug"
-    ]
+    for agent_name, keywords in AGENT_KEYWORDS.items():
 
-    # Creative tasks
-    creative_words = [
-        "image", "photo", "picture",
-        "video", "animation", "generate image",
-        "tasveer"
-    ]
+        scores[agent_name] = count_matches(
+            text,
+            keywords
+        )
 
-    # Memory tasks
-    memory_words = [
-        "remember", "save this",
-        "forget", "memory",
-        "yaad rakh", "bhool jao"
-    ]
+    best_agent = max(
+        scores,
+        key=scores.get
+    )
 
-    if any(word in text for word in research_words):
-        return "research"
+    if scores[best_agent] == 0:
+        return "general"
 
-    if any(word in text for word in coding_words):
-        return "coding"
-
-    if any(word in text for word in creative_words):
-        return "creative"
-
-    if any(word in text for word in memory_words):
-        return "memory"
-
-    return "general"
+    return best_agent
 
 
 def generate_reply(
@@ -93,6 +154,7 @@ def generate_reply(
 
     # General conversation
     if selected_agent == "general":
+
         return agent_manager.run_agent(
             "general",
             message=message,
