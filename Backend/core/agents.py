@@ -1,4 +1,24 @@
 
+class GeneralAgent:
+
+    def run(self, **kwargs):
+        return {
+            "agent": "general",
+            "status": "ready"
+        }
+
+
+class ResearchAgent:
+
+    def run(self, task: str = "", **kwargs):
+        return {
+            "agent": "research",
+            "status": "registered",
+            "task": task,
+            "message": "Research capabilities are not connected yet."
+        }
+
+
 class AgentManager:
 
     def __init__(self):
@@ -14,7 +34,6 @@ class AgentManager:
         return list(self.agents.keys())
 
     def run_agent(self, name, **kwargs):
-
         agent = self.get_agent(name)
 
         if agent is None:
@@ -31,3 +50,13 @@ class AgentManager:
 
 
 agent_manager = AgentManager()
+
+agent_manager.register_agent(
+    "general",
+    GeneralAgent()
+)
+
+agent_manager.register_agent(
+    "research",
+    ResearchAgent()
+)
