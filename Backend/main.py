@@ -1,10 +1,9 @@
-from core.brain import generate_reply
-from core.agents import agent_manager
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from core.brain import generate_reply
+from core.agents import agent_manager
 
 
 app = FastAPI(
@@ -12,6 +11,7 @@ app = FastAPI(
     description="Personal AI Assistant API",
     version="1.0.0"
 )
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -39,11 +39,26 @@ def home():
 
 @app.get("/health")
 def health():
-    return {"status": "healthy"}
+    return {
+        "status": "healthy"
+    }
+
+
+@app.get("/agents")
+def get_agents():
+    agents = agent_manager.list_agents()
+
+    return {
+        "status": "success",
+        "main_assistant": "ASHAR JARVIS",
+        "total_agents": len(agents),
+        "available_agents": agents
+    }
 
 
 @app.post("/chat")
 def chat(request: ChatRequest):
+
     message = request.message.strip()
 
     if not message:
