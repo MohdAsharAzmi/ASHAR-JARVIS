@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from core.brain import generate_reply
 from core.agents import agent_manager
 from core.providers import get_provider_status
-
+from core.task_manager import submit_task, get_task
 
 app = FastAPI(
     title="Ashar JARVIS",
@@ -29,6 +29,9 @@ class ChatRequest(BaseModel):
     personality: str = "professional"
     history: list[dict] = Field(default_factory=list)
 
+class TaskRequest(BaseModel):
+    agent: str
+    task: str
 
 @app.get("/")
 def home():
@@ -92,3 +95,40 @@ def chat(request: ChatRequest):
         "reply": reply
     }
     
+@app.post("/tasks")
+def create_background_task(request: TaskRequest):
+    task = request.task.strip()
+    agent = request.agent.strip().lower()
+
+    if not task:
+        raise HTTPException(
+            status_code=400,
+            detail="Task cannot be empty"
+        )
+
+    try:
+        result = submit_task(agent, task)
+        return {
+            "status": "success",
+            "message": "Background task submitted",
+            "task": result
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+
+@app.get("/tasks/{task_id}")
+def check_background_task(task_id: str):
+    result = get_task(task_id)
+
+    if result is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Task not found"
+        )
+
+    return result
