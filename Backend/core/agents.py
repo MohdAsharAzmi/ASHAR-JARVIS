@@ -1,6 +1,8 @@
 
+import os
 from urllib.parse import urlparse
-from ddgs import DDGS
+from google import genai
+from google.genai import types
 
 
 class GeneralAgent:
@@ -20,86 +22,136 @@ class ResearchAgent:
         if not task:
             raise ValueError("Research task cannot be empty")
 
+        api_key = os.getenv("GEMINI_API_KEY")
+
+        if not api_key:
+            raise RuntimeError("GEMINI_API_KEY is missing.")
+
+        model = os.getenv(
+            "AI_MODEL",
+            "gemini-2.5-flash"
+        )
+
         try:
-            search_results = DDGS(timeout=25).text(
-    query=task,
-    region="in-en",
-    safesearch="moderate",
-    max_results=8,
-    backend="bing,google"
+            client = genai.Client(api_key=api_key)
+
+            response = client.models.generate_content(
+                model=model,
+                contents=(
+                    "Research the following topic using Google Search. "
+                    "Give a clear, accurate and detailed report. "
+                    "Use current information where relevant. "
+                    "Do not invent facts or sources. "
+                    "Clearly mention uncertainty when information is unclear.\n\n"
+                    "Research topic: " + task
+                ),
+                config=types.GenerateContentConfig(
+                    tools=[
+                        types.Tool(
+                            google_search=types.GoogleSearch()
+                        )
+                    ],
+                    temperature=1.0,
+                    max_output_tokens=3000
+                )
+            )
+
+            report = response.text or (
+                "Gemini did not return a research report."
             )
 
             sources = []
             seen_urls = set()
+            search_queries = []
 
-            for item in search_results or []:
+            candidates = response.candidates or []
 
-                title = item.get("title", "").strip()
-                url = (
-                    item.get("href")
-                    or item.get("url")
-                    or ""
-                ).strip()
+            if candidates:
+                metadata = (
+                    candidates[0].grounding_metadata
+                )
 
-                snippet = (
-                    item.get("body")
-                    or item.get("snippet")
-                    or ""
-                ).strip()
+                if metadata:
+                    search_queries = (
+                        metadata.web_search_queries or []
+                    )
 
-                if not title or not url:
-                    continue
+                    chunks = (
+                        metadata.grounding_chunks or []
+                    )
 
-                parsed_url = urlparse(url)
+                    for chunk in chunks:
 
-                if parsed_url.scheme not in ("http", "https"):
-                    continue
+                        web_source = getattr(
+                            chunk, "web", None
+                        )
 
-                if not parsed_url.netloc:
-                    continue
+                        if not web_source:
+                            continue
 
-                normalized_url = url.rstrip("/").lower()
+                        title = (
+                            getattr(web_source, "title", "")
+                            or "Web source"
+                        )
 
-                if normalized_url in seen_urls:
-                    continue
+                        url = (
+                            getattr(web_source, "uri", "")
+                            or ""
+                        )
 
-                seen_urls.add(normalized_url)
+                        if not url:
+                            continue
 
-                sources.append({
-                    "title": title,
-                    "snippet": snippet,
-                    "url": url,
-                    "domain": parsed_url.netloc
-                })
+                        parsed_url = urlparse(url)
+
+                        if parsed_url.scheme not in (
+                            "http", "https"
+                        ):
+                            continue
+
+                        if not parsed_url.netloc:
+                            continue
+
+                        normalized_url = url.rstrip("/").lower()
+
+                        if normalized_url in seen_urls:
+                            continue
+
+                        seen_urls.add(normalized_url)
+
+                        sources.append({
+                            "title": title,
+                            "url": url,
+                            "domain": parsed_url.netloc
+                        })
 
             return {
                 "agent": "research",
-                "status": (
-                    "search_completed"
-                    if sources else "no_results"
-                ),
+                "status": "research_completed",
                 "task": task,
-                "search_engine": "DDGS metasearch",
+                "model": model,
+                "search_engine": "Google Search Grounding",
+                "report": report,
                 "total_sources": len(sources),
                 "sources": sources,
+                "search_queries": search_queries,
                 "message": (
-                    "Web search completed. Results are "
-                    "search listings, not independently "
-                    "verified facts. Full webpage analysis "
-                    "is not connected yet."
-                    if sources else
-                    "No search results were returned. "
-                    "Please try again with different keywords."
+                    "Gemini research completed using "
+                    "Google Search Grounding."
                 )
             }
 
         except Exception as error:
 
-            print("Research search error:", str(error))
+            print(
+                "Research error:",
+                type(error).__name__
+            )
 
             raise RuntimeError(
-                "Web research failed. Please retry later."
-            ) from error
+                "Gemini research failed. Check API key, "
+                "model, quota and connection."
+            ) from None
 
 
 class CodingAgent:
