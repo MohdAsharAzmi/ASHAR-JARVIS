@@ -4,14 +4,43 @@ class GeneralAgent:
         return {"agent": "general", "status": "ready"}
 
 
+
 class ResearchAgent:
     def run(self, task: str = "", **kwargs):
+        task = task.strip()
+
+        if not task:
+            raise ValueError("Research task cannot be empty")
+
         return {
             "agent": "research",
-            "status": "registered",
+            "status": "planning",
             "task": task,
-            "message": "Research capabilities are not connected yet."
+            "research_plan": {
+                "objective": (
+                    "Understand the topic and prepare "
+                    "a structured research report."
+                ),
+                "questions": [
+                    "What is the topic?",
+                    "Why is it important?",
+                    "What are its main facts?",
+                    "What are its effects or applications?"
+                ],
+                "report_sections": [
+                    "Introduction",
+                    "Key Information",
+                    "Importance",
+                    "Conclusion"
+                ]
+            },
+            "sources": [],
+            "message": (
+                "Research plan created. "
+                "Internet search is not connected yet."
+            )
         }
+
 
 
 class CodingAgent:
