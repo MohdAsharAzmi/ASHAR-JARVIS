@@ -1,3 +1,9 @@
+import json
+import re
+from html import unescape
+from urllib.parse import urlencode, quote
+from urllib.request import Request, urlopen
+from urllib.error import URLError, HTTPError
 
 class GeneralAgent:
     def run(self, **kwargs):
