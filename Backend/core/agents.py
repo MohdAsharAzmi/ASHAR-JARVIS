@@ -21,12 +21,12 @@ class ResearchAgent:
             raise ValueError("Research task cannot be empty")
 
         try:
-            search_results = DDGS(timeout=15).text(
-                query=task,
-                region="in-en",
-                safesearch="moderate",
-                max_results=8,
-                backend="auto"
+            search_results = DDGS(timeout=25).text(
+    query=task,
+    region="in-en",
+    safesearch="moderate",
+    max_results=8,
+    backend="bing,google"
             )
 
             sources = []
