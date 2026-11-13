@@ -1,91 +1,105 @@
-import json
-import re
-from html import unescape
-from urllib.parse import urlencode, quote
-from urllib.request import Request, urlopen
-from urllib.error import URLError, HTTPError
+
+from urllib.parse import urlparse
+from ddgs import DDGS
+
 
 class GeneralAgent:
     def run(self, **kwargs):
-        return {"agent": "general", "status": "ready"}
-
-
+        return {
+            "agent": "general",
+            "status": "ready"
+        }
 
 
 class ResearchAgent:
+
     def run(self, task: str = "", **kwargs):
+
         task = task.strip()
 
         if not task:
             raise ValueError("Research task cannot be empty")
 
-        params = {
-            "action": "query",
-            "list": "search",
-            "srsearch": task,
-            "srlimit": 5,
-            "srprop": "snippet|timestamp",
-            "format": "json",
-            "formatversion": 2
-        }
-
-        url = (
-            "https://en.wikipedia.org/w/api.php?"
-            + urlencode(params)
-        )
-
-        request = Request(
-            url,
-            headers={
-                "User-Agent": "AsharJARVIS/1.0 (research assistant)"
-            }
-        )
-
         try:
-            with urlopen(request, timeout=20) as response:
-                data = json.loads(response.read().decode("utf-8"))
-
-            results = data.get("query", {}).get("search", [])
+            search_results = DDGS(timeout=15).text(
+                query=task,
+                region="in-en",
+                safesearch="moderate",
+                max_results=8,
+                backend="auto"
+            )
 
             sources = []
+            seen_urls = set()
 
-            for item in results:
-                title = item.get("title", "")
-                snippet = unescape(
-                    re.sub(
-                        r"<[^>]+>",
-                        "",
-                        item.get("snippet", "")
-                    )
-                )
+            for item in search_results or []:
+
+                title = item.get("title", "").strip()
+                url = (
+                    item.get("href")
+                    or item.get("url")
+                    or ""
+                ).strip()
+
+                snippet = (
+                    item.get("body")
+                    or item.get("snippet")
+                    or ""
+                ).strip()
+
+                if not title or not url:
+                    continue
+
+                parsed_url = urlparse(url)
+
+                if parsed_url.scheme not in ("http", "https"):
+                    continue
+
+                if not parsed_url.netloc:
+                    continue
+
+                normalized_url = url.rstrip("/").lower()
+
+                if normalized_url in seen_urls:
+                    continue
+
+                seen_urls.add(normalized_url)
 
                 sources.append({
                     "title": title,
                     "snippet": snippet,
-                    "url": (
-                        "https://en.wikipedia.org/wiki/"
-                        + quote(title.replace(" ", "_"))
-                    )
+                    "url": url,
+                    "domain": parsed_url.netloc
                 })
 
             return {
                 "agent": "research",
-                "status": "search_completed",
+                "status": (
+                    "search_completed"
+                    if sources else "no_results"
+                ),
                 "task": task,
+                "search_engine": "DDGS metasearch",
                 "total_sources": len(sources),
                 "sources": sources,
                 "message": (
-                    "Wikipedia search completed. "
-                    "These are search results, not a verified final report."
+                    "Web search completed. Results are "
+                    "search listings, not independently "
+                    "verified facts. Full webpage analysis "
+                    "is not connected yet."
+                    if sources else
+                    "No search results were returned. "
+                    "Please try again with different keywords."
                 )
             }
 
-        except (HTTPError, URLError, TimeoutError) as error:
+        except Exception as error:
+
+            print("Research search error:", str(error))
+
             raise RuntimeError(
-                "Wikipedia search failed: " + str(error)
-            )
-
-
+                "Web research failed. Please retry later."
+            ) from error
 
 
 class CodingAgent:
@@ -99,7 +113,12 @@ class CodingAgent:
 
 
 class CreativeAgent:
-    def run(self, task: str = "", media_type: str = "image", **kwargs):
+    def run(
+        self,
+        task: str = "",
+        media_type: str = "image",
+        **kwargs
+    ):
         return {
             "agent": "creative",
             "status": "registered",
@@ -134,6 +153,7 @@ class AgentManager:
         return list(self.agents.keys())
 
     def run_agent(self, name, **kwargs):
+
         agent = self.get_agent(name)
 
         if agent is None:
