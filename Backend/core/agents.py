@@ -5,6 +5,7 @@ class GeneralAgent:
 
 
 
+
 class ResearchAgent:
     def run(self, task: str = "", **kwargs):
         task = task.strip()
@@ -12,34 +13,72 @@ class ResearchAgent:
         if not task:
             raise ValueError("Research task cannot be empty")
 
-        return {
-            "agent": "research",
-            "status": "planning",
-            "task": task,
-            "research_plan": {
-                "objective": (
-                    "Understand the topic and prepare "
-                    "a structured research report."
-                ),
-                "questions": [
-                    "What is the topic?",
-                    "Why is it important?",
-                    "What are its main facts?",
-                    "What are its effects or applications?"
-                ],
-                "report_sections": [
-                    "Introduction",
-                    "Key Information",
-                    "Importance",
-                    "Conclusion"
-                ]
-            },
-            "sources": [],
-            "message": (
-                "Research plan created. "
-                "Internet search is not connected yet."
-            )
+        params = {
+            "action": "query",
+            "list": "search",
+            "srsearch": task,
+            "srlimit": 5,
+            "srprop": "snippet|timestamp",
+            "format": "json",
+            "formatversion": 2
         }
+
+        url = (
+            "https://en.wikipedia.org/w/api.php?"
+            + urlencode(params)
+        )
+
+        request = Request(
+            url,
+            headers={
+                "User-Agent": "AsharJARVIS/1.0 (research assistant)"
+            }
+        )
+
+        try:
+            with urlopen(request, timeout=20) as response:
+                data = json.loads(response.read().decode("utf-8"))
+
+            results = data.get("query", {}).get("search", [])
+
+            sources = []
+
+            for item in results:
+                title = item.get("title", "")
+                snippet = unescape(
+                    re.sub(
+                        r"<[^>]+>",
+                        "",
+                        item.get("snippet", "")
+                    )
+                )
+
+                sources.append({
+                    "title": title,
+                    "snippet": snippet,
+                    "url": (
+                        "https://en.wikipedia.org/wiki/"
+                        + quote(title.replace(" ", "_"))
+                    )
+                })
+
+            return {
+                "agent": "research",
+                "status": "search_completed",
+                "task": task,
+                "total_sources": len(sources),
+                "sources": sources,
+                "message": (
+                    "Wikipedia search completed. "
+                    "These are search results, not a verified final report."
+                )
+            }
+
+        except (HTTPError, URLError, TimeoutError) as error:
+            raise RuntimeError(
+                "Wikipedia search failed: " + str(error)
+            )
+
 
 
 
