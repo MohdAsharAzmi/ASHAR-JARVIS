@@ -42,7 +42,7 @@ class ResearchAgent:
                     "Give a clear, accurate and detailed report. "
                     "Use current information where relevant. "
                     "Do not invent facts or sources. "
-                    "Clearly mention uncertainty when information is unclear.\n\n"
+                    "Mention uncertainty when information is unclear.\n\n"
                     "Research topic: " + task
                 ),
                 config=types.GenerateContentConfig(
@@ -67,23 +67,21 @@ class ResearchAgent:
             candidates = response.candidates or []
 
             if candidates:
-                metadata = (
-                    candidates[0].grounding_metadata
-                )
+                metadata = candidates[0].grounding_metadata
 
                 if metadata:
                     search_queries = (
                         metadata.web_search_queries or []
                     )
 
-                    chunks = (
-                        metadata.grounding_chunks or []
-                    )
+                    chunks = metadata.grounding_chunks or []
 
                     for chunk in chunks:
 
                         web_source = getattr(
-                            chunk, "web", None
+                            chunk,
+                            "web",
+                            None
                         )
 
                         if not web_source:
@@ -105,14 +103,17 @@ class ResearchAgent:
                         parsed_url = urlparse(url)
 
                         if parsed_url.scheme not in (
-                            "http", "https"
+                            "http",
+                            "https"
                         ):
                             continue
 
                         if not parsed_url.netloc:
                             continue
 
-                        normalized_url = url.rstrip("/").lower()
+                        normalized_url = (
+                            url.rstrip("/").lower()
+                        )
 
                         if normalized_url in seen_urls:
                             continue
@@ -143,24 +144,45 @@ class ResearchAgent:
 
         except Exception as error:
 
-    error_code = getattr(error, "code", "Unknown")
-    error_message = getattr(error, "message", None)
+            error_code = getattr(
+                error,
+                "code",
+                "Unknown"
+            )
 
-    if not error_message:
-        error_message = str(error)
+            error_message = getattr(
+                error,
+                "message",
+                None
+            )
 
-    safe_message = str(error_message).replace(
-        api_key,
-        "[REDACTED]"
-    )
+            if not error_message:
+                error_message = str(error)
 
-    print("Research error type:", type(error).__name__)
-    print("Research error code:", error_code)
-    print("Research error details:", safe_message[:1000])
+            safe_message = str(error_message).replace(
+                api_key,
+                "[REDACTED]"
+            )
 
-    raise RuntimeError(
-        "Gemini research failed. Check Render logs."
-    ) from None
+            print(
+                "Research error type:",
+                type(error).__name__
+            )
+
+            print(
+                "Research error code:",
+                error_code
+            )
+
+            print(
+                "Research error details:",
+                safe_message[:1000]
+            )
+
+            raise RuntimeError(
+                "Gemini research failed. Check Render logs."
+            ) from None
+
 
 class CodingAgent:
     def run(self, task: str = "", **kwargs):
