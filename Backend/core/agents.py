@@ -143,16 +143,24 @@ class ResearchAgent:
 
         except Exception as error:
 
-            print(
-                "Research error:",
-                type(error).__name__
-            )
+    error_code = getattr(error, "code", "Unknown")
+    error_message = getattr(error, "message", None)
 
-            raise RuntimeError(
-                "Gemini research failed. Check API key, "
-                "model, quota and connection."
-            ) from None
+    if not error_message:
+        error_message = str(error)
 
+    safe_message = str(error_message).replace(
+        api_key,
+        "[REDACTED]"
+    )
+
+    print("Research error type:", type(error).__name__)
+    print("Research error code:", error_code)
+    print("Research error details:", safe_message[:1000])
+
+    raise RuntimeError(
+        "Gemini research failed. Check Render logs."
+    ) from None
 
 class CodingAgent:
     def run(self, task: str = "", **kwargs):
