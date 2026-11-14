@@ -201,7 +201,36 @@ def generate_reply(
                 history=history
             )
 
-        # SPECIALIST AGENTS
+                # SPECIALIST AGENTS
+        elif selected_agent == "creative":
+
+            text = message.lower()
+
+            if any(word in text for word in [
+                "animation", "animate"
+            ]):
+                media_type = "animation"
+
+            elif any(word in text for word in [
+                "video", "movie"
+            ]):
+                media_type = "video"
+
+            elif any(word in text for word in [
+                "design", "poster", "thumbnail",
+                "interface", "ui", "logo"
+            ]):
+                media_type = "design"
+
+            else:
+                media_type = "image"
+
+            result = agent_manager.run_agent(
+                "creative",
+                task=message,
+                media_type=media_type
+            )
+
         else:
 
             result = agent_manager.run_agent(
