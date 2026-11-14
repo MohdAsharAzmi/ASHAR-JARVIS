@@ -17,7 +17,7 @@ AGENT_KEYWORDS = {
         "maloomat", "talash", "khojo",
         "jaankari", "jankari",
         "kis bare mein", "ke baare mein batao",
-        "explain", "importance", "benefits",
+        "importance", "benefits",
         "causes", "history", "facts",
         "tell me about", "what is",
         "how does", "why is",
@@ -31,7 +31,9 @@ AGENT_KEYWORDS = {
         "css", "debug", "error", "bug",
         "website", "web development",
         "programming", "code likho",
-        "code banao"
+        "code banao", "variables",
+        "functions", "loops", "classes",
+        "syntax", "algorithm"
     ],
 
     "creative": [
@@ -39,7 +41,8 @@ AGENT_KEYWORDS = {
         "video", "animation",
         "generate image", "edit image",
         "tasveer", "design", "poster",
-        "thumbnail"
+        "thumbnail", "logo", "interface",
+        "ui design"
     ],
 
     "memory": [
@@ -78,6 +81,53 @@ def select_agent(message):
 
     text = message.lower().strip()
 
+    # MEMORY PRIORITY
+    memory_terms = [
+        "remember", "save this",
+        "forget", "memory",
+        "yaad rakho", "yaad rakh",
+        "bhool jao", "save kar lo",
+        "delete memory", "show memory",
+        "meri memory"
+    ]
+
+    if any(term in text for term in memory_terms):
+        return "memory"
+
+    # CODING PRIORITY
+    coding_terms = [
+        "python", "javascript", "html",
+        "css", "java", "c++",
+        "programming", "coding",
+        "code", "debug", "variables",
+        "functions", "loops", "classes",
+        "syntax", "algorithm",
+        "program", "web development"
+    ]
+
+    if any(
+        re.search(
+            r"\b" + re.escape(term) + r"\b",
+            text
+        )
+        for term in coding_terms
+    ):
+        return "coding"
+
+    # CREATIVE PRIORITY
+    creative_terms = [
+        "generate image", "edit image",
+        "image", "photo", "picture",
+        "video", "animation",
+        "tasveer", "design", "poster",
+        "thumbnail", "logo", "interface",
+        "ui design"
+    ]
+
+    if any(term in text for term in creative_terms):
+        return "creative"
+
+    # NORMAL KEYWORD SCORING
     scores = {}
 
     for agent_name, keywords in AGENT_KEYWORDS.items():
@@ -105,10 +155,11 @@ def generate_general_reply(
     history
 ):
 
-    # External AI is disabled unless explicitly permitted.
     external_ai_allowed = (
-        os.getenv("ALLOW_EXTERNAL_AI", "false").lower()
-        == "true"
+        os.getenv(
+            "ALLOW_EXTERNAL_AI",
+            "false"
+        ).lower() == "true"
     )
 
     provider_name = os.getenv(
@@ -201,7 +252,7 @@ def generate_reply(
                 history=history
             )
 
-                # SPECIALIST AGENTS
+        # CREATIVE AGENT
         elif selected_agent == "creative":
 
             text = message.lower()
@@ -209,20 +260,24 @@ def generate_reply(
             if any(word in text for word in [
                 "animation", "animate"
             ]):
+
                 media_type = "animation"
 
             elif any(word in text for word in [
                 "video", "movie"
             ]):
+
                 media_type = "video"
 
             elif any(word in text for word in [
                 "design", "poster", "thumbnail",
                 "interface", "ui", "logo"
             ]):
+
                 media_type = "design"
 
             else:
+
                 media_type = "image"
 
             result = agent_manager.run_agent(
@@ -231,6 +286,7 @@ def generate_reply(
                 media_type=media_type
             )
 
+        # SPECIALIST AGENTS
         else:
 
             result = agent_manager.run_agent(
