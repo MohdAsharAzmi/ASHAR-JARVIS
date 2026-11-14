@@ -47,8 +47,11 @@ class ResearchAgent:
         }
 
 
+
 class CodingAgent:
+
     def run(self, task="", **kwargs):
+
         task = task.strip()
 
         if not task:
@@ -56,6 +59,7 @@ class CodingAgent:
 
         text = task.lower()
 
+        # Detect programming language
         languages = {
             "python": ["python", ".py"],
             "javascript": ["javascript", "js", ".js"],
@@ -69,51 +73,102 @@ class CodingAgent:
         detected_language = "not specified"
 
         for language, keywords in languages.items():
+
             if any(word in text for word in keywords):
                 detected_language = language
                 break
 
+        # Detect task type
         if any(word in text for word in [
-            "debug", "error", "bug", "fix", "problem"
+            "debug", "error", "bug", "fix",
+            "problem", "not working"
         ]):
+
             task_type = "debugging"
-            steps = [
-                "Understand the reported problem",
-                "Inspect the relevant code",
+
+            guidance = [
+                "Inspect the error message",
+                "Check the relevant code",
                 "Identify the possible cause",
-                "Prepare and test a correction"
+                "Prepare and verify a correction"
             ]
 
-        elif any(word in text for word in [
-            "build", "create", "make", "develop", "website"
-        ]):
-            task_type = "project development"
-            steps = [
-                "Understand project requirements",
-                "Plan project structure",
-                "Identify required components",
-                "Develop and test components"
-            ]
+            next_action = (
+                "Please provide the relevant code "
+                "and exact error message."
+            )
 
         elif any(word in text for word in [
-            "explain", "meaning", "what is", "samjhao"
+            "explain", "meaning", "samjhao",
+            "how does", "what is"
         ]):
+
             task_type = "code explanation"
-            steps = [
+
+            guidance = [
                 "Identify the programming concept",
+                "Understand its purpose",
                 "Break it into smaller parts",
-                "Explain how it works",
-                "Provide a simple example"
+                "Study a simple example"
             ]
+
+            next_action = (
+                "The concept will need a clear explanation "
+                "with an appropriate example."
+            )
+
+        elif any(word in text for word in [
+            "build", "create", "make",
+            "develop", "website", "project"
+        ]):
+
+            task_type = "project development"
+
+            guidance = [
+                "Understand project requirements",
+                "Plan the project structure",
+                "Identify required technologies",
+                "Build components step by step",
+                "Test the completed project"
+            ]
+
+            next_action = (
+                "First define the required features "
+                "and project structure."
+            )
+
+        elif any(word in text for word in [
+            "write code", "generate code",
+            "code likho", "code banao"
+        ]):
+
+            task_type = "code generation"
+
+            guidance = [
+                "Understand the desired output",
+                "Identify the programming language",
+                "Plan the code structure",
+                "Generate and test the code"
+            ]
+
+            next_action = (
+                "Actual AI code generation is not connected yet."
+            )
 
         else:
+
             task_type = "coding assistance"
-            steps = [
+
+            guidance = [
                 "Understand the coding request",
-                "Identify programming concepts",
-                "Prepare a solution plan",
-                "Test the proposed approach"
+                "Identify relevant concepts",
+                "Prepare a solution approach",
+                "Test the proposed solution"
             ]
+
+            next_action = (
+                "More details may be needed to complete this task."
+            )
 
         return {
             "agent": "coding",
@@ -121,11 +176,12 @@ class CodingAgent:
             "task": task,
             "programming_language": detected_language,
             "task_type": task_type,
-            "steps": steps,
+            "guidance": guidance,
+            "next_action": next_action,
             "message": (
-                "Coding Agent analysed your request. "
+                "Coding Agent V2 analysed your request. "
                 "Task type: " + task_type +
-                ". Programming language: " + detected_language + "."
+                ". Language: " + detected_language + "."
             )
         }
 
