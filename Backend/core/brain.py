@@ -1,28 +1,41 @@
 
 import re
+from core.agents import agent_manager
 
-
-# ASHAR JARVIS — Independent Brain V1
 
 AGENT_KEYWORDS = {
     "research": [
-        "research", "search", "internet", "find information",
-        "look up", "maloomat", "talash", "jaankari",
-        "jankari", "latest news", "kis bare mein"
+        "research", "search", "internet",
+        "find information", "look up",
+        "maloomat", "talash", "khojo",
+        "jaankari", "jankari",
+        "kis bare mein", "ke baare mein batao"
     ],
+
     "coding": [
-        "code", "coding", "program", "python", "javascript",
-        "html", "css", "debug", "error", "bug", "website",
-        "web development", "programming"
+        "code", "coding", "program",
+        "python", "javascript", "html",
+        "css", "debug", "error", "bug",
+        "website", "web development",
+        "programming", "code likho",
+        "code banao"
     ],
+
     "creative": [
-        "image", "photo", "picture", "video", "animation",
-        "design", "poster", "thumbnail", "creative"
+        "image", "photo", "picture",
+        "video", "animation",
+        "generate image", "edit image",
+        "tasveer", "design", "poster",
+        "thumbnail"
     ],
+
     "memory": [
-        "remember", "save this", "forget", "memory",
-        "yaad rakh", "yaad rakho", "bhool jao",
-        "save kar lo", "delete memory"
+        "remember", "save this",
+        "forget", "memory",
+        "yaad rakh", "yaad rakho",
+        "bhool jao", "save kar lo",
+        "delete memory", "show memory",
+        "meri memory"
     ]
 }
 
@@ -49,7 +62,10 @@ def select_agent(message):
     scores = {}
 
     for agent_name, keywords in AGENT_KEYWORDS.items():
-        scores[agent_name] = count_matches(text, keywords)
+        scores[agent_name] = count_matches(
+            text,
+            keywords
+        )
 
     best_agent = max(scores, key=scores.get)
 
@@ -65,90 +81,58 @@ def generate_reply(
     personality="professional",
     history=None
 ):
+
     message = message.strip()
     history = history or []
 
     if not message:
-        return "Please tell me something."
+        return {
+            "status": "error",
+            "message": "Please tell me something."
+        }
 
-    text = message.lower()
-
-    # Greeting detection
-    greetings = [
-        "hello", "hi", "hey", "salam",
-        "assalamualaikum", "good morning",
-        "good evening"
-    ]
-
-    if any(word in text.split() for word in greetings):
-        return (
-            "Wa Alaikum Assalam! "
-            "ASHAR JARVIS Independent Brain V1 is online. "
-            "How can I help you?"
-        )
-
-    # Help command
-    if text in ["help", "commands", "what can you do"]:
-        return (
-            "I am ASHAR JARVIS Independent Brain V1.\n\n"
-            "Available modules:\n"
-            "1. General Assistant\n"
-            "2. Coding Agent\n"
-            "3. Research Agent (not connected yet)\n"
-            "4. Creative Agent (not connected yet)\n"
-            "5. Memory Agent (not connected yet)\n\n"
-            "My brain can identify your request and select "
-            "the relevant module. More capabilities are coming."
-        )
-
-    # Select the correct agent
     selected_agent = select_agent(message)
 
-    # General Assistant
-    if selected_agent == "general":
-        return (
-            "I understood your message, but my language model "
-            "is not connected yet.\n\n"
-            "My independent brain is active. I can identify "
-            "some types of requests and route them to modules.\n\n"
-            "Tell me your request in a little more detail."
-        )
+    try:
 
-    # Coding Agent
-    if selected_agent == "coding":
-        return (
-            "Coding Agent selected.\n\n"
-            "I can help organize coding tasks and understand "
-            "basic programming requests. My full coding engine "
-            "is still under development.\n\n"
-            "Please share your code or explain what you want to build."
-        )
+        # GENERAL AGENT
+        if selected_agent == "general":
 
-    # Research Agent
-    if selected_agent == "research":
-        return (
-            "Research Agent selected.\n\n"
-            "Live internet search is not connected in this version. "
-            "I will not pretend that I searched the internet.\n\n"
-            "You can share text or information here for analysis."
-        )
+            result = agent_manager.run_agent(
+                "general",
+                message=message,
+                language=language,
+                personality=personality,
+                history=history
+            )
 
-    # Creative Agent
-    if selected_agent == "creative":
-        return (
-            "Creative Agent selected.\n\n"
-            "I can help plan designs, image ideas and animation concepts. "
-            "Direct image or video generation is not connected yet.\n\n"
-            "Describe your creative idea."
-        )
+        # SPECIALIST AGENTS
+        else:
 
-    # Memory Agent
-    if selected_agent == "memory":
-        return (
-            "Memory Agent selected.\n\n"
-            "Permanent memory storage is not connected yet. "
-            "I will not claim that I saved or deleted anything.\n\n"
-            "The memory module will be built in a later step."
-        )
+            result = agent_manager.run_agent(
+                selected_agent,
+                task=message
+            )
 
-    return "Request received. ASHAR JARVIS is processing your message."
+        return {
+            "status": "success",
+            "assistant": "ASHAR JARVIS",
+            "selected_agent": selected_agent,
+            "language": language,
+            "result": result,
+            "message": result.get(
+                "message",
+                "Task processed successfully."
+            )
+        }
+
+    except Exception as error:
+
+        return {
+            "status": "error",
+            "assistant": "ASHAR JARVIS",
+            "selected_agent": selected_agent,
+            "message": "An error occurred while processing your request.",
+            "error": str(error)
+        }
+        
