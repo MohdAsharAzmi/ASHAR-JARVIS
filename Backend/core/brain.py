@@ -4,13 +4,21 @@ from core.agents import agent_manager
 
 
 AGENT_KEYWORDS = {
-    "research": [
-        "research", "search", "internet",
-        "find information", "look up",
-        "maloomat", "talash", "khojo",
-        "jaankari", "jankari",
-        "kis bare mein", "ke baare mein batao"
-    ],
+
+"research": [
+    "research", "search", "internet",
+    "find information", "look up",
+    "maloomat", "talash", "khojo",
+    "jaankari", "jankari",
+    "kis bare mein", "ke baare mein batao",
+    "explain", "importance", "benefits",
+    "causes", "history", "facts",
+    "tell me about", "what is",
+    "how does", "why is",
+    "describe", "advantages",
+    "disadvantages"
+],
+
 
     "coding": [
         "code", "coding", "program",
