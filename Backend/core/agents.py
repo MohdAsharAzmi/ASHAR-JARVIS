@@ -12,9 +12,9 @@ from core.memory_store import (
 from core.providers import get_ai_provider
 
 
-# =====================================
+# ==========================================
 # GENERAL AGENT
-# =====================================
+# ==========================================
 
 class GeneralAgent:
 
@@ -28,9 +28,9 @@ class GeneralAgent:
         }
 
 
-# =====================================
+# ==========================================
 # RESEARCH AGENT
-# =====================================
+# ==========================================
 
 class ResearchAgent:
 
@@ -39,21 +39,17 @@ class ResearchAgent:
         task = (task or "").strip()
 
         if not task:
-            raise ValueError(
-                "Research task cannot be empty"
-            )
+            raise ValueError("Research task cannot be empty")
 
         return {
             "agent": "research",
             "status": "offline_mode",
             "task": task,
-
             "analysis": {
                 "topic": task,
                 "word_count": len(task.split()),
                 "research_type": "general research"
             },
-
             "research_plan": [
                 "Understand the research question",
                 "Identify important subtopics",
@@ -61,7 +57,6 @@ class ResearchAgent:
                 "Compare available evidence",
                 "Prepare a final report"
             ],
-
             "message": (
                 "Research Agent analysed your request. "
                 "Live internet search is not connected yet."
@@ -69,9 +64,9 @@ class ResearchAgent:
         }
 
 
-# =====================================
-# CODING AGENT V5
-# =====================================
+# ==========================================
+# CODING AGENT V6
+# ==========================================
 
 class CodingAgent:
 
@@ -80,13 +75,11 @@ class CodingAgent:
         task = (task or "").strip()
 
         if not task:
-            raise ValueError(
-                "Coding task cannot be empty"
-            )
+            raise ValueError("Coding task cannot be empty")
 
         text = task.lower()
 
-        # DETECT PROGRAMMING LANGUAGE
+        # LANGUAGE DETECTION
 
         languages = {
             "python": ["python", ".py"],
@@ -121,35 +114,54 @@ class CodingAgent:
             if detected_language != "not specified":
                 break
 
-        # DETECT TASK TYPE
+        # TASK TYPE DETECTION
 
         if any(word in text for word in [
-            "debug", "error", "bug", "fix",
-            "not working", "problem"
+            "debug",
+            "error",
+            "bug",
+            "fix",
+            "not working",
+            "problem"
         ]):
 
             task_type = "debugging"
 
         elif any(word in text for word in [
-            "explain", "meaning", "samjhao",
-            "how does", "what is",
-            "variables", "variable",
-            "data type", "data types",
-            "datatype", "datatypes"
+            "explain",
+            "meaning",
+            "samjhao",
+            "how does",
+            "what is",
+            "variables",
+            "variable",
+            "data type",
+            "data types",
+            "datatype",
+            "datatypes",
+            "print",
+            "input",
+            "output"
         ]):
 
             task_type = "code explanation"
 
         elif any(word in text for word in [
-            "write code", "generate code",
-            "code likho", "code banao"
+            "write code",
+            "generate code",
+            "code likho",
+            "code banao"
         ]):
 
             task_type = "code generation"
 
         elif any(word in text for word in [
-            "build", "create", "make",
-            "develop", "website", "project"
+            "build",
+            "create",
+            "make",
+            "develop",
+            "website",
+            "project"
         ]):
 
             task_type = "project development"
@@ -158,9 +170,237 @@ class CodingAgent:
 
             task_type = "coding assistance"
 
-        # =================================
-        # PYTHON DATA TYPES - OFFLINE
-        # =================================
+        # ======================================
+        # PYTHON PRINT + INPUT
+        # ======================================
+
+        has_print = (
+            "print" in text
+            or "output" in text
+        )
+
+        has_input = (
+            "input" in text
+            or "user input" in text
+        )
+
+        if (
+            detected_language == "python"
+            and task_type == "code explanation"
+            and has_print
+            and has_input
+        ):
+
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "print and input",
+                "answer": """
+PYTHON PRINT() AND INPUT()
+
+1. print()
+
+print() ka use screen par output
+dikhane ke liye hota hai.
+
+Example:
+
+print("Hello World")
+
+Output:
+
+Hello World
+
+
+2. input()
+
+input() ka use user se information
+lene ke liye hota hai.
+
+Example:
+
+name = input("Enter your name: ")
+
+Yahan user apna naam enter karega.
+
+
+3. PRINT() + INPUT() TOGETHER
+
+Dono functions ko ek saath use kar sakte hain.
+
+Example:
+
+name = input("Enter your name: ")
+
+print("Hello", name)
+
+Agar user Ashar enter karta hai,
+to output hoga:
+
+Hello Ashar
+
+
+IMPORTANT:
+
+input() normally data ko string ke form
+mein return karta hai.
+
+Agar number lena ho:
+
+age = int(input("Enter age: "))
+
+Decimal number ke liye float() use karo:
+
+price = float(input("Enter price: "))
+
+
+PRACTICE:
+
+Ek program banao jo:
+
+1. User se uska favourite game pooche.
+2. Us game ka naam variable mein store kare.
+3. print() se game ka naam display kare.
+""",
+                "message": "Coding Agent V6 answered offline."
+            }
+
+        # ======================================
+        # PYTHON PRINT
+        # ======================================
+
+        if (
+            detected_language == "python"
+            and task_type == "code explanation"
+            and has_print
+        ):
+
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "print",
+                "answer": """
+PYTHON PRINT()
+
+Python mein print() function ka use
+screen par output display karne ke liye hota hai.
+
+Example:
+
+print("Hello World")
+
+Output:
+
+Hello World
+
+
+Numbers bhi display kar sakte hain:
+
+print(100)
+
+Output:
+
+100
+
+
+Variables bhi print kar sakte hain:
+
+name = "Ashar"
+
+print(name)
+
+Output:
+
+Ashar
+
+
+Multiple values:
+
+name = "Ashar"
+score = 100
+
+print(name, score)
+
+Output:
+
+Ashar 100
+
+
+PRACTICE:
+
+print() ka use karke apna naam
+aur favourite subject display karo.
+""",
+                "message": "Coding Agent V6 answered offline."
+            }
+
+        # ======================================
+        # PYTHON INPUT
+        # ======================================
+
+        if (
+            detected_language == "python"
+            and task_type == "code explanation"
+            and has_input
+        ):
+
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "input",
+                "answer": """
+PYTHON INPUT()
+
+Python mein input() function ka use
+user se information lene ke liye hota hai.
+
+Example:
+
+name = input("Enter your name: ")
+
+print(name)
+
+
+PROGRAM KAISE KAAM KARTA HAI?
+
+1. input() user se naam poochta hai.
+2. User apna naam enter karta hai.
+3. Naam variable mein store hota hai.
+4. print() naam ko display karta hai.
+
+
+IMPORTANT:
+
+input() se milne wali value default
+roop se string hoti hai.
+
+Number ke liye int() use karo:
+
+age = int(input("Enter age: "))
+
+Decimal number ke liye float() use karo:
+
+price = float(input("Enter price: "))
+
+
+PRACTICE:
+
+Ek program banao jo user se uska
+favourite colour pooche aur phir
+print() se colour display kare.
+""",
+                "message": "Coding Agent V6 answered offline."
+            }
+
+        # ======================================
+        # PYTHON DATA TYPES
+        # ======================================
 
         if (
             detected_language == "python"
@@ -173,108 +413,111 @@ class CodingAgent:
             ])
         ):
 
-            answer = """
-PYTHON DATA TYPES
-
-Python mein data types batate hain
-ki variable mein kis tarah ka data hai.
-
-1. int
-
-Whole numbers ke liye.
-
-age = 18
-
-2. float
-
-Decimal numbers ke liye.
-
-price = 99.50
-
-3. str
-
-Text store karne ke liye.
-
-name = "Ashar"
-
-4. bool
-
-True ya False values ke liye.
-
-is_student = True
-
-5. list
-
-Multiple values store karne ke liye.
-List ko change kar sakte hain.
-
-fruits = ["Apple", "Mango", "Banana"]
-
-6. tuple
-
-Multiple values store karta hai.
-Tuple banne ke baad change nahi hota.
-
-colors = ("Red", "Green", "Blue")
-
-7. dict
-
-Key-value pairs store karta hai.
-
-student = {
-    "name": "Ashar",
-    "age": 18
-}
-
-8. set
-
-Unique values store karta hai.
-Duplicate values nahi rakhta.
-
-numbers = {1, 2, 3, 3}
-
-print(numbers)
-
-Set mein har value unique hogi.
-
-PYTHON TYPE CHECKING
-
-type() function se data type check kar sakte hain.
-
-name = "Ashar"
-
-print(type(name))
-
-Output:
-
-<class 'str'>
-"""
-
             return {
                 "agent": "coding",
                 "status": "offline_answer",
                 "programming_language": "python",
                 "task_type": "code explanation",
                 "topic": "data types",
-                "answer": answer,
-                "message": (
-                    "Coding Agent V5 answered offline."
-                )
+                "answer": """
+PYTHON DATA TYPES
+
+Data type batata hai ki variable mein
+kis tarah ka data store hai.
+
+1. int
+
+Integer numbers ke liye.
+
+Example:
+age = 18
+
+2. float
+
+Decimal numbers ke liye.
+
+Example:
+price = 99.5
+
+3. str
+
+Text store karne ke liye.
+
+Example:
+name = "Ashar"
+
+4. bool
+
+True ya False values ke liye.
+
+Example:
+is_active = True
+
+5. list
+
+Multiple values store karne ke liye.
+
+Example:
+games = ["Minecraft", "Chess"]
+
+6. tuple
+
+Ordered values ka collection.
+
+Example:
+colors = ("Red", "Blue")
+
+7. dict
+
+Key-value pairs store karne ke liye.
+
+Example:
+student = {
+    "name": "Ashar",
+    "score": 100
+}
+
+8. set
+
+Unique values ka collection.
+
+Example:
+numbers = {1, 2, 3}
+
+DATA TYPE CHECK KARNA
+
+type() function se data type check
+kar sakte hain.
+
+Example:
+
+score = 100
+
+print(type(score))
+""",
+                "message": "Coding Agent V6 answered offline."
             }
 
-        # =================================
-        # PYTHON VARIABLES - OFFLINE
-        # =================================
+        # ======================================
+        # PYTHON VARIABLES
+        # ======================================
 
         if (
             detected_language == "python"
             and task_type == "code explanation"
             and any(word in text for word in [
-                "variable", "variables"
+                "variable",
+                "variables"
             ])
         ):
 
-            answer = """
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "variables",
+                "answer": """
 PYTHON VARIABLES
 
 Variable ek container ki tarah hota hai
@@ -283,13 +526,13 @@ jisme hum data store karte hain.
 Example:
 
 name = "Ashar"
-age = 18
+score = 100
 city = "Lucknow"
 
 Yahan:
 
 - name mein Ashar store hai.
-- age mein 18 store hai.
+- score mein 100 store hai.
 - city mein Lucknow store hai.
 
 Python mein variable banane ke liye
@@ -302,29 +545,19 @@ score = 200
 
 Ab score ki value 200 hai.
 
-Variable ka naam rakhte waqt:
+VARIABLE NAMING RULES
 
 - Naam letter ya underscore se shuru hona chahiye.
 - Naam number se shuru nahi ho sakta.
 - Spaces allowed nahi hain.
 - Python keywords ko variable name nahi bana sakte.
-"""
-
-            return {
-                "agent": "coding",
-                "status": "offline_answer",
-                "programming_language": "python",
-                "task_type": "code explanation",
-                "topic": "variables",
-                "answer": answer,
-                "message": (
-                    "Coding Agent V5 answered offline."
-                )
+""",
+                "message": "Coding Agent V6 answered offline."
             }
 
-        # =================================
-        # EXTERNAL AI PERMISSION
-        # =================================
+        # ======================================
+        # OPTIONAL EXTERNAL AI
+        # ======================================
 
         external_ai_allowed = (
             os.getenv(
@@ -338,36 +571,18 @@ Variable ka naam rakhte waqt:
             "offline"
         ).lower()
 
-        # =================================
-        # OPTIONAL AI RESPONSE
-        # =================================
-
-        if (
-            external_ai_allowed
-            and provider_name != "offline"
-        ):
+        if external_ai_allowed and provider_name != "offline":
 
             try:
 
                 provider = get_ai_provider()
 
                 prompt = (
-                    "You are ASHAR JARVIS Coding Agent, "
-                    "an expert programming tutor. "
-                    "Understand the coding request. "
-                    "Explain concepts with simple examples. "
-                    "For debugging, explain the likely cause "
-                    "and a safe correction. "
-                    "For code generation, provide readable code. "
-                    "Prefer step-by-step guidance. "
-                    "Use Hindi, English or Hinglish naturally. "
-                    "Do not claim code was tested unless it was. "
-                    "Programming language: "
-                    + detected_language
-                    + ". Task type: "
-                    + task_type
-                    + ". User request: "
-                    + task
+                    "You are a professional coding tutor. "
+                    "Explain programming concepts clearly. "
+                    "Use simple Hinglish when appropriate. "
+                    "Give accurate examples and explain them. "
+                    "User request: " + task
                 )
 
                 answer = provider.generate(
@@ -383,79 +598,80 @@ Variable ka naam rakhte waqt:
                     "programming_language": detected_language,
                     "task_type": task_type,
                     "answer": answer,
-                    "message": (
-                        "Coding Agent V5 generated an AI response."
-                    )
+                    "message": "Coding Agent used the configured AI provider."
                 }
 
             except Exception as error:
 
                 print(
-                    "Coding Agent AI error:",
+                    "Coding AI error:",
                     str(error)
                 )
 
-        # =================================
+        # ======================================
         # OFFLINE GUIDANCE
-        # =================================
+        # ======================================
 
         guidance = {
-
             "debugging": [
-                "Inspect the error message",
-                "Check the relevant code",
-                "Identify the possible cause",
-                "Prepare and verify a correction"
+                "Read the complete error message.",
+                "Check the line number.",
+                "Check spelling and syntax.",
+                "Check variable names.",
+                "Test the code again."
             ],
 
             "code explanation": [
-                "Identify the programming concept",
-                "Understand its purpose",
-                "Break it into smaller parts",
-                "Study a simple example"
+                "Identify the programming concept.",
+                "Understand its purpose.",
+                "Study a small example.",
+                "Run the example.",
+                "Modify it and observe the result."
             ],
 
             "code generation": [
-                "Understand the desired output",
-                "Identify the programming language",
-                "Plan the code structure",
-                "Prepare and test the code"
+                "Understand the required output.",
+                "Plan the program structure.",
+                "Choose the required language.",
+                "Build the solution step by step.",
+                "Test the final program."
             ],
 
             "project development": [
-                "Understand project requirements",
-                "Plan the project structure",
-                "Identify required technologies",
-                "Build components step by step",
-                "Test the completed project"
+                "Define project requirements.",
+                "Plan the file structure.",
+                "Build the basic interface.",
+                "Implement project functionality.",
+                "Test and improve the project."
             ],
 
             "coding assistance": [
-                "Understand the coding request",
-                "Identify relevant concepts",
-                "Prepare a solution approach",
-                "Test the proposed solution"
+                "Identify the programming language.",
+                "Understand the problem.",
+                "Break it into smaller steps.",
+                "Test a small solution.",
+                "Improve the implementation."
             ]
         }
 
         return {
             "agent": "coding",
             "status": "offline_guidance",
-            "task": task,
             "programming_language": detected_language,
             "task_type": task_type,
+            "task": task,
             "guidance": guidance[task_type],
             "message": (
-                "Coding Agent V5 analysed your request. "
-                "External AI is disabled, so detailed "
-                "AI-generated coding assistance is unavailable."
+                "Coding Agent V6 prepared offline guidance. "
+                "This request needs a more advanced coding engine "
+                "for a complete solution."
             )
         }
 
 
-# =====================================
+# ==========================================
 # CREATIVE AGENT
-# =====================================
+# ==========================================
 
 class CreativeAgent:
 
@@ -464,9 +680,7 @@ class CreativeAgent:
         task = (task or "").strip()
 
         if not task:
-            raise ValueError(
-                "Creative task cannot be empty"
-            )
+            raise ValueError("Creative task cannot be empty")
 
         allowed_types = [
             "image",
@@ -483,27 +697,24 @@ class CreativeAgent:
             "status": "concept_prepared",
             "task": task,
             "media_type": media_type,
-
             "creative_plan": [
-                "Understand the creative idea",
+                "Understand the creative requirement",
                 "Identify the visual style",
                 "Plan the composition",
-                "Define required elements",
-                "Prepare the creative brief"
+                "Choose colours and typography",
+                "Prepare the final creative direction"
             ],
-
             "message": (
                 "Creative Agent prepared a "
                 + media_type
-                + " project plan. "
-                "Generation tools are not connected yet."
+                + " project plan. Generation tools are not connected yet."
             )
         }
 
 
-# =====================================
+# ==========================================
 # MEMORY AGENT
-# =====================================
+# ==========================================
 
 class MemoryAgent:
 
@@ -511,8 +722,6 @@ class MemoryAgent:
 
         task = (task or "").strip()
         text = task.lower()
-
-        # SAVE MEMORY
 
         if text.startswith((
             "save:",
@@ -523,9 +732,7 @@ class MemoryAgent:
             content = task.split(":", 1)[1].strip()
 
             if not content:
-                raise ValueError(
-                    "Memory content is empty"
-                )
+                raise ValueError("Memory content is empty")
 
             result = save_memory(content)
 
@@ -535,8 +742,6 @@ class MemoryAgent:
                 "memory": result,
                 "message": "Memory successfully saved."
             }
-
-        # SEARCH MEMORY
 
         if text.startswith((
             "search:",
@@ -553,8 +758,6 @@ class MemoryAgent:
                 "results": results,
                 "message": "Memory search completed."
             }
-
-        # LIST MEMORIES
 
         if text in (
             "list",
@@ -573,26 +776,18 @@ class MemoryAgent:
                 "message": "Saved memories retrieved."
             }
 
-        # DELETE MEMORY
-
         if text.startswith("delete:"):
 
             memory_id = task.split(":", 1)[1].strip()
 
             if not memory_id.isdigit():
-                raise ValueError(
-                    "Provide a valid memory ID"
-                )
+                raise ValueError("Provide a valid memory ID")
 
-            deleted = delete_memory(
-                int(memory_id)
-            )
+            deleted = delete_memory(int(memory_id))
 
             return {
                 "agent": "memory",
-                "status": (
-                    "deleted" if deleted else "not_found"
-                ),
+                "status": "deleted" if deleted else "not_found",
                 "memory_id": int(memory_id),
                 "message": (
                     "Memory deleted."
@@ -604,40 +799,32 @@ class MemoryAgent:
         return {
             "agent": "memory",
             "status": "waiting_for_command",
-
             "supported_commands": [
                 "save: your information",
                 "search: keyword",
                 "list",
                 "delete: memory_id"
             ],
-
-            "message": (
-                "Please use a supported memory command."
-            )
+            "message": "Please use a supported memory command."
         }
 
 
-# =====================================
+# ==========================================
 # AGENT MANAGER
-# =====================================
+# ==========================================
 
 class AgentManager:
 
     def __init__(self):
-
         self.agents = {}
 
     def register_agent(self, name, agent):
-
         self.agents[name] = agent
 
     def get_agent(self, name):
-
         return self.agents.get(name)
 
     def list_agents(self):
-
         return list(self.agents.keys())
 
     def run_agent(self, name, **kwargs):
@@ -645,21 +832,17 @@ class AgentManager:
         agent = self.get_agent(name)
 
         if agent is None:
-            raise ValueError(
-                "Agent not found: " + name
-            )
+            raise ValueError("Agent not found: " + name)
 
         if not hasattr(agent, "run"):
-            raise TypeError(
-                "Agent does not have a run method"
-            )
+            raise TypeError("Agent does not have a run method")
 
         return agent.run(**kwargs)
 
 
-# =====================================
+# ==========================================
 # REGISTER ALL AGENTS
-# =====================================
+# ==========================================
 
 agent_manager = AgentManager()
 
@@ -686,5 +869,4 @@ agent_manager.register_agent(
 agent_manager.register_agent(
     "memory",
     MemoryAgent()
-            )
-            
+)
