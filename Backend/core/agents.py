@@ -36,7 +36,7 @@ class ResearchAgent:
 
     def run(self, task="", **kwargs):
 
-        task = task.strip()
+        task = (task or "").strip()
 
         if not task:
             raise ValueError(
@@ -70,14 +70,14 @@ class ResearchAgent:
 
 
 # =====================================
-# CODING AGENT V3
+# CODING AGENT V4
 # =====================================
 
 class CodingAgent:
 
     def run(self, task="", **kwargs):
 
-        task = task.strip()
+        task = (task or "").strip()
 
         if not task:
             raise ValueError(
@@ -86,7 +86,7 @@ class CodingAgent:
 
         text = task.lower()
 
-        # Detect programming language
+        # DETECT PROGRAMMING LANGUAGE
 
         languages = {
             "python": ["python", ".py"],
@@ -102,18 +102,26 @@ class CodingAgent:
 
         for language, keywords in languages.items():
 
-            if any(
-                re.search(
+            for word in keywords:
+
+                if word.startswith("."):
+
+                    if word in text:
+                        detected_language = language
+                        break
+
+                elif re.search(
                     r"\b" + re.escape(word) + r"\b",
                     text
-                )
-                for word in keywords
-            ):
+                ):
 
-                detected_language = language
+                    detected_language = language
+                    break
+
+            if detected_language != "not specified":
                 break
 
-        # Detect task type
+        # DETECT TASK TYPE
 
         if any(word in text for word in [
             "debug", "error", "bug", "fix",
@@ -124,7 +132,8 @@ class CodingAgent:
 
         elif any(word in text for word in [
             "explain", "meaning", "samjhao",
-            "how does", "what is", "variables"
+            "how does", "what is",
+            "variables", "variable"
         ]):
 
             task_type = "code explanation"
@@ -147,7 +156,62 @@ class CodingAgent:
 
             task_type = "coding assistance"
 
-        # Check external AI permission
+        # =================================
+        # OFFLINE PYTHON TUTOR
+        # =================================
+
+        if (
+            detected_language == "python"
+            and task_type == "code explanation"
+            and any(word in text for word in [
+                "variable", "variables"
+            ])
+        ):
+
+            answer = """
+PYTHON VARIABLES
+
+Variable ek container ki tarah hota hai
+jisme hum data store karte hain.
+
+Example:
+
+name = "Ashar"
+age = 15
+city = "Lucknow"
+
+Yahan:
+
+- name mein Ashar store hai.
+- age mein 15 store hai.
+- city mein Lucknow store hai.
+
+Python mein variable banane ke liye
+alag se data type declare nahi karna padta.
+
+Example:
+
+score = 100
+score = 200
+
+Ab score ki value 200 hai.
+"""
+
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "variables",
+                "answer": answer,
+                "message": (
+                    "Coding Agent V4 answered offline."
+                )
+            }
+
+        # =================================
+        # EXTERNAL AI PERMISSION
+        # =================================
 
         external_ai_allowed = (
             os.getenv(
@@ -161,9 +225,14 @@ class CodingAgent:
             "offline"
         ).lower()
 
-        # Actual AI response
+        # =================================
+        # AI RESPONSE (OPTIONAL)
+        # =================================
 
-        if external_ai_allowed and provider_name != "offline":
+        if (
+            external_ai_allowed
+            and provider_name != "offline"
+        ):
 
             try:
 
@@ -202,7 +271,7 @@ class CodingAgent:
                     "task_type": task_type,
                     "answer": answer,
                     "message": (
-                        "Coding Agent V3 generated an AI response."
+                        "Coding Agent V4 generated an AI response."
                     )
                 }
 
@@ -213,7 +282,9 @@ class CodingAgent:
                     str(error)
                 )
 
-        # Offline guidance
+        # =================================
+        # OFFLINE GUIDANCE
+        # =================================
 
         guidance = {
 
@@ -262,7 +333,7 @@ class CodingAgent:
             "task_type": task_type,
             "guidance": guidance[task_type],
             "message": (
-                "Coding Agent V3 analysed your request. "
+                "Coding Agent V4 analysed your request. "
                 "External AI is disabled, so detailed "
                 "AI-generated coding assistance is unavailable."
             )
@@ -277,7 +348,7 @@ class CreativeAgent:
 
     def run(self, task="", media_type="image", **kwargs):
 
-        task = task.strip()
+        task = (task or "").strip()
 
         if not task:
             raise ValueError(
