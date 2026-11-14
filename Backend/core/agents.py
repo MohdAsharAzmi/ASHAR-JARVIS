@@ -687,3 +687,4 @@ agent_manager.register_agent(
     "memory",
     MemoryAgent()
             )
+            
