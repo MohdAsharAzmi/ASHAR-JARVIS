@@ -70,7 +70,7 @@ class ResearchAgent:
 
 
 # =====================================
-# CODING AGENT V4
+# CODING AGENT V5
 # =====================================
 
 class CodingAgent:
@@ -133,7 +133,9 @@ class CodingAgent:
         elif any(word in text for word in [
             "explain", "meaning", "samjhao",
             "how does", "what is",
-            "variables", "variable"
+            "variables", "variable",
+            "data type", "data types",
+            "datatype", "datatypes"
         ]):
 
             task_type = "code explanation"
@@ -157,7 +159,111 @@ class CodingAgent:
             task_type = "coding assistance"
 
         # =================================
-        # OFFLINE PYTHON TUTOR
+        # PYTHON DATA TYPES - OFFLINE
+        # =================================
+
+        if (
+            detected_language == "python"
+            and task_type == "code explanation"
+            and any(word in text for word in [
+                "data type",
+                "data types",
+                "datatype",
+                "datatypes"
+            ])
+        ):
+
+            answer = """
+PYTHON DATA TYPES
+
+Python mein data types batate hain
+ki variable mein kis tarah ka data hai.
+
+1. int
+
+Whole numbers ke liye.
+
+age = 18
+
+2. float
+
+Decimal numbers ke liye.
+
+price = 99.50
+
+3. str
+
+Text store karne ke liye.
+
+name = "Ashar"
+
+4. bool
+
+True ya False values ke liye.
+
+is_student = True
+
+5. list
+
+Multiple values store karne ke liye.
+List ko change kar sakte hain.
+
+fruits = ["Apple", "Mango", "Banana"]
+
+6. tuple
+
+Multiple values store karta hai.
+Tuple banne ke baad change nahi hota.
+
+colors = ("Red", "Green", "Blue")
+
+7. dict
+
+Key-value pairs store karta hai.
+
+student = {
+    "name": "Ashar",
+    "age": 18
+}
+
+8. set
+
+Unique values store karta hai.
+Duplicate values nahi rakhta.
+
+numbers = {1, 2, 3, 3}
+
+print(numbers)
+
+Set mein har value unique hogi.
+
+PYTHON TYPE CHECKING
+
+type() function se data type check kar sakte hain.
+
+name = "Ashar"
+
+print(type(name))
+
+Output:
+
+<class 'str'>
+"""
+
+            return {
+                "agent": "coding",
+                "status": "offline_answer",
+                "programming_language": "python",
+                "task_type": "code explanation",
+                "topic": "data types",
+                "answer": answer,
+                "message": (
+                    "Coding Agent V5 answered offline."
+                )
+            }
+
+        # =================================
+        # PYTHON VARIABLES - OFFLINE
         # =================================
 
         if (
@@ -177,13 +283,13 @@ jisme hum data store karte hain.
 Example:
 
 name = "Ashar"
-age = 15
+age = 18
 city = "Lucknow"
 
 Yahan:
 
 - name mein Ashar store hai.
-- age mein 15 store hai.
+- age mein 18 store hai.
 - city mein Lucknow store hai.
 
 Python mein variable banane ke liye
@@ -195,6 +301,13 @@ score = 100
 score = 200
 
 Ab score ki value 200 hai.
+
+Variable ka naam rakhte waqt:
+
+- Naam letter ya underscore se shuru hona chahiye.
+- Naam number se shuru nahi ho sakta.
+- Spaces allowed nahi hain.
+- Python keywords ko variable name nahi bana sakte.
 """
 
             return {
@@ -205,7 +318,7 @@ Ab score ki value 200 hai.
                 "topic": "variables",
                 "answer": answer,
                 "message": (
-                    "Coding Agent V4 answered offline."
+                    "Coding Agent V5 answered offline."
                 )
             }
 
@@ -226,7 +339,7 @@ Ab score ki value 200 hai.
         ).lower()
 
         # =================================
-        # AI RESPONSE (OPTIONAL)
+        # OPTIONAL AI RESPONSE
         # =================================
 
         if (
@@ -271,7 +384,7 @@ Ab score ki value 200 hai.
                     "task_type": task_type,
                     "answer": answer,
                     "message": (
-                        "Coding Agent V4 generated an AI response."
+                        "Coding Agent V5 generated an AI response."
                     )
                 }
 
@@ -333,7 +446,7 @@ Ab score ki value 200 hai.
             "task_type": task_type,
             "guidance": guidance[task_type],
             "message": (
-                "Coding Agent V4 analysed your request. "
+                "Coding Agent V5 analysed your request. "
                 "External AI is disabled, so detailed "
                 "AI-generated coding assistance is unavailable."
             )
@@ -573,4 +686,4 @@ agent_manager.register_agent(
 agent_manager.register_agent(
     "memory",
     MemoryAgent()
-)
+            )
