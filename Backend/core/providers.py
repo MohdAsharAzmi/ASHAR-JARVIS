@@ -29,7 +29,7 @@ class GeminiProvider(BaseProvider):
 
         self.model = os.getenv(
             "AI_MODEL",
-            "gemini-2.5-flash"
+            "gemini-3.8-flash"
         )
 
         if not self.api_key:
@@ -105,7 +105,6 @@ class GeminiProvider(BaseProvider):
                 contents=contents,
                 config=types.GenerateContentConfig(
                     system_instruction=system_instruction,
-                    temperature=0.7,
                     max_output_tokens=1500
                 )
             )
@@ -219,3 +218,4 @@ def get_provider_status():
         "status": "unsupported",
         "real_ai_connected": False
     }
+    
