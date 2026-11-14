@@ -1,24 +1,29 @@
 
+import os
 import re
+
 from core.agents import agent_manager
+from core.providers import (
+    get_ai_provider,
+    OfflineProvider
+)
 
 
 AGENT_KEYWORDS = {
 
-"research": [
-    "research", "search", "internet",
-    "find information", "look up",
-    "maloomat", "talash", "khojo",
-    "jaankari", "jankari",
-    "kis bare mein", "ke baare mein batao",
-    "explain", "importance", "benefits",
-    "causes", "history", "facts",
-    "tell me about", "what is",
-    "how does", "why is",
-    "describe", "advantages",
-    "disadvantages"
-],
-
+    "research": [
+        "research", "search", "internet",
+        "find information", "look up",
+        "maloomat", "talash", "khojo",
+        "jaankari", "jankari",
+        "kis bare mein", "ke baare mein batao",
+        "explain", "importance", "benefits",
+        "causes", "history", "facts",
+        "tell me about", "what is",
+        "how does", "why is",
+        "describe", "advantages",
+        "disadvantages"
+    ],
 
     "coding": [
         "code", "coding", "program",
@@ -49,13 +54,18 @@ AGENT_KEYWORDS = {
 
 
 def count_matches(text, keywords):
+
     score = 0
 
     for keyword in keywords:
+
         if " " in keyword:
+
             if keyword in text:
                 score += 2
+
         else:
+
             pattern = r"\b" + re.escape(keyword) + r"\b"
 
             if re.search(pattern, text):
@@ -65,22 +75,99 @@ def count_matches(text, keywords):
 
 
 def select_agent(message):
+
     text = message.lower().strip()
 
     scores = {}
 
     for agent_name, keywords in AGENT_KEYWORDS.items():
+
         scores[agent_name] = count_matches(
             text,
             keywords
         )
 
-    best_agent = max(scores, key=scores.get)
+    best_agent = max(
+        scores,
+        key=scores.get
+    )
 
     if scores[best_agent] == 0:
         return "general"
 
     return best_agent
+
+
+def generate_general_reply(
+    message,
+    language,
+    personality,
+    history
+):
+
+    # External AI is disabled unless explicitly permitted.
+    external_ai_allowed = (
+        os.getenv("ALLOW_EXTERNAL_AI", "false").lower()
+        == "true"
+    )
+
+    provider_name = os.getenv(
+        "AI_PROVIDER",
+        "offline"
+    ).lower()
+
+    if external_ai_allowed:
+
+        provider = get_ai_provider()
+
+    else:
+
+        provider = OfflineProvider()
+
+    try:
+
+        reply = provider.generate(
+            message=message,
+            language=language,
+            personality=personality,
+            history=history
+        )
+
+        return {
+            "agent": "general",
+            "status": (
+                "ai_response"
+                if external_ai_allowed and provider_name != "offline"
+                else "offline_mode"
+            ),
+            "provider": (
+                provider_name
+                if external_ai_allowed
+                else "offline"
+            ),
+            "message": reply
+        }
+
+    except Exception as error:
+
+        print(
+            "AI provider error:",
+            str(error)
+        )
+
+        fallback = OfflineProvider()
+
+        return {
+            "agent": "general",
+            "status": "offline_fallback",
+            "provider": "offline",
+            "message": fallback.generate(
+                message,
+                language,
+                personality,
+                history
+            )
+        }
 
 
 def generate_reply(
@@ -94,6 +181,7 @@ def generate_reply(
     history = history or []
 
     if not message:
+
         return {
             "status": "error",
             "message": "Please tell me something."
@@ -106,8 +194,7 @@ def generate_reply(
         # GENERAL AGENT
         if selected_agent == "general":
 
-            result = agent_manager.run_agent(
-                "general",
+            result = generate_general_reply(
                 message=message,
                 language=language,
                 personality=personality,
@@ -136,11 +223,16 @@ def generate_reply(
 
     except Exception as error:
 
+        print(
+            "Brain processing error:",
+            str(error)
+        )
+
         return {
             "status": "error",
             "assistant": "ASHAR JARVIS",
             "selected_agent": selected_agent,
-            "message": "An error occurred while processing your request.",
-            "error": str(error)
+            "message": (
+                "An error occurred while processing your request."
+            )
         }
-        
