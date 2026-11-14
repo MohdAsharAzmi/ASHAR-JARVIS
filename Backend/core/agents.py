@@ -1,224 +1,236 @@
 
-import os
-from urllib.parse import urlparse
-from google import genai
-from google.genai import types
+import re
+
+
+# =====================================
+# ASHAR JARVIS - INDEPENDENT AGENTS V1
+# =====================================
 
 
 class GeneralAgent:
-    def run(self, **kwargs):
+
+    def run(self, message="", **kwargs):
         return {
             "agent": "general",
-            "status": "ready"
+            "status": "ready",
+            "task": message,
+            "message": "General Assistant is ready."
         }
 
 
+# =====================================
+# RESEARCH AGENT
+# =====================================
+
 class ResearchAgent:
 
-    def run(self, task: str = "", **kwargs):
+    def run(self, task="", **kwargs):
 
         task = task.strip()
 
         if not task:
             raise ValueError("Research task cannot be empty")
 
-        api_key = os.getenv("GEMINI_API_KEY")
+        words = task.split()
 
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY is missing.")
-
-        model = os.getenv(
-            "AI_MODEL",
-            "gemini-2.5-flash"
-        )
-
-        try:
-            client = genai.Client(api_key=api_key)
-
-            response = client.models.generate_content(
-                model=model,
-                contents=(
-                    "Research the following topic using Google Search. "
-                    "Give a clear, accurate and detailed report. "
-                    "Use current information where relevant. "
-                    "Do not invent facts or sources. "
-                    "Mention uncertainty when information is unclear.\n\n"
-                    "Research topic: " + task
-                ),
-                config=types.GenerateContentConfig(
-                    tools=[
-                        types.Tool(
-                            google_search=types.GoogleSearch()
-                        )
-                    ],
-                    temperature=1.0,
-                    max_output_tokens=3000
-                )
+        return {
+            "agent": "research",
+            "status": "offline_mode",
+            "task": task,
+            "analysis": {
+                "topic": task,
+                "word_count": len(words),
+                "research_type": "general research"
+            },
+            "research_plan": [
+                "Understand the research question",
+                "Identify important subtopics",
+                "Collect reliable information",
+                "Compare available evidence",
+                "Prepare a final report"
+            ],
+            "message": (
+                "Research Agent has analysed your request. "
+                "Live internet search is not connected yet. "
+                "This agent is currently operating offline."
             )
+        }
 
-            report = response.text or (
-                "Gemini did not return a research report."
-            )
 
-            sources = []
-            seen_urls = set()
-            search_queries = []
-
-            candidates = response.candidates or []
-
-            if candidates:
-                metadata = candidates[0].grounding_metadata
-
-                if metadata:
-                    search_queries = (
-                        metadata.web_search_queries or []
-                    )
-
-                    chunks = metadata.grounding_chunks or []
-
-                    for chunk in chunks:
-
-                        web_source = getattr(
-                            chunk,
-                            "web",
-                            None
-                        )
-
-                        if not web_source:
-                            continue
-
-                        title = (
-                            getattr(web_source, "title", "")
-                            or "Web source"
-                        )
-
-                        url = (
-                            getattr(web_source, "uri", "")
-                            or ""
-                        )
-
-                        if not url:
-                            continue
-
-                        parsed_url = urlparse(url)
-
-                        if parsed_url.scheme not in (
-                            "http",
-                            "https"
-                        ):
-                            continue
-
-                        if not parsed_url.netloc:
-                            continue
-
-                        normalized_url = (
-                            url.rstrip("/").lower()
-                        )
-
-                        if normalized_url in seen_urls:
-                            continue
-
-                        seen_urls.add(normalized_url)
-
-                        sources.append({
-                            "title": title,
-                            "url": url,
-                            "domain": parsed_url.netloc
-                        })
-
-            return {
-                "agent": "research",
-                "status": "research_completed",
-                "task": task,
-                "model": model,
-                "search_engine": "Google Search Grounding",
-                "report": report,
-                "total_sources": len(sources),
-                "sources": sources,
-                "search_queries": search_queries,
-                "message": (
-                    "Gemini research completed using "
-                    "Google Search Grounding."
-                )
-            }
-
-        except Exception as error:
-
-            error_code = getattr(
-                error,
-                "code",
-                "Unknown"
-            )
-
-            error_message = getattr(
-                error,
-                "message",
-                None
-            )
-
-            if not error_message:
-                error_message = str(error)
-
-            safe_message = str(error_message).replace(
-                api_key,
-                "[REDACTED]"
-            )
-
-            print(
-                "Research error type:",
-                type(error).__name__
-            )
-
-            print(
-                "Research error code:",
-                error_code
-            )
-
-            print(
-                "Research error details:",
-                safe_message[:1000]
-            )
-
-            raise RuntimeError(
-                "Gemini research failed. Check Render logs."
-            ) from None
-
+# =====================================
+# CODING AGENT
+# =====================================
 
 class CodingAgent:
-    def run(self, task: str = "", **kwargs):
+
+    def run(self, task="", **kwargs):
+
+        task = task.strip()
+
+        if not task:
+            raise ValueError("Coding task cannot be empty")
+
+        text = task.lower()
+
+        languages = {
+            "python": ["python", ".py"],
+            "javascript": ["javascript", "js", ".js"],
+            "html": ["html", ".html"],
+            "css": ["css", ".css"],
+            "java": ["java", ".java"],
+            "c++": ["c++", "cpp"],
+            "c": [" c ", "language c"]
+        }
+
+        detected_language = "not specified"
+
+        for language, keywords in languages.items():
+            if any(word in text for word in keywords):
+                detected_language = language
+                break
+
+        if any(word in text for word in [
+            "debug", "error", "bug", "fix", "problem"
+        ]):
+            task_type = "debugging"
+
+            steps = [
+                "Understand the reported problem",
+                "Inspect the relevant code",
+                "Identify the possible cause",
+                "Prepare and test a correction"
+            ]
+
+        elif any(word in text for word in [
+            "build", "create", "make", "develop", "website"
+        ]):
+            task_type = "project development"
+
+            steps = [
+                "Understand the project requirements",
+                "Plan the project structure",
+                "Identify required components",
+                "Develop and test each component"
+            ]
+
+        elif any(word in text for word in [
+            "explain", "meaning", "what is", "samjhao"
+        ]):
+            task_type = "code explanation"
+
+            steps = [
+                "Identify the programming concept",
+                "Break it into smaller parts",
+                "Explain its working",
+                "Provide a simple example"
+            ]
+
+        else:
+            task_type = "coding assistance"
+
+            steps = [
+                "Understand the coding request",
+                "Identify the required programming concepts",
+                "Prepare a solution plan",
+                "Test the proposed approach"
+            ]
+
         return {
             "agent": "coding",
-            "status": "registered",
+            "status": "task_analysed",
             "task": task,
-            "message": "Coding capabilities are not connected yet."
+            "programming_language": detected_language,
+            "task_type": task_type,
+            "steps": steps,
+            "message": (
+                "Coding Agent analysed your request. "
+                "Task type: " + task_type +
+                ". Programming language: " + detected_language + "."
+            )
         }
 
+
+# =====================================
+# CREATIVE AGENT
+# =====================================
 
 class CreativeAgent:
-    def run(
-        self,
-        task: str = "",
-        media_type: str = "image",
-        **kwargs
-    ):
+
+    def run(self, task="", media_type="image", **kwargs):
+
+        task = task.strip()
+
+        if not task:
+            raise ValueError("Creative task cannot be empty")
+
+        allowed_types = [
+            "image", "video", "animation", "design"
+        ]
+
+        if media_type not in allowed_types:
+            media_type = "image"
+
         return {
             "agent": "creative",
-            "status": "registered",
+            "status": "concept_prepared",
             "task": task,
             "media_type": media_type,
-            "message": "Creative models are not connected yet."
+            "creative_plan": [
+                "Understand the creative idea",
+                "Identify the visual style",
+                "Plan the composition",
+                "Define the required elements",
+                "Prepare the final creative brief"
+            ],
+            "message": (
+                "Creative Agent has prepared a "
+                + media_type + " project plan. "
+                "Generation tools are not connected yet."
+            )
         }
 
+
+# =====================================
+# MEMORY AGENT
+# =====================================
 
 class MemoryAgent:
-    def run(self, action: str = "status", **kwargs):
+
+    def run(self, action="status", task="", **kwargs):
+
+        text = (task or "").lower()
+
+        if any(word in text for word in [
+            "forget", "delete", "bhool jao", "hata do"
+        ]):
+            action = "forget"
+
+        elif any(word in text for word in [
+            "remember", "save", "yaad rakh", "yaad rakho"
+        ]):
+            action = "save"
+
+        elif any(word in text for word in [
+            "show memory", "list memory", "meri memory"
+        ]):
+            action = "list"
+
         return {
             "agent": "memory",
-            "status": "registered",
+            "status": "not_connected",
             "action": action,
-            "message": "Persistent memory storage is not connected yet."
+            "task": task,
+            "message": (
+                "Memory Agent identified the requested action: "
+                + action +
+                ". Permanent memory storage is our next development step."
+            )
         }
 
+
+# =====================================
+# AGENT MANAGER
+# =====================================
 
 class AgentManager:
 
@@ -242,10 +254,16 @@ class AgentManager:
             raise ValueError("Agent not found: " + name)
 
         if not hasattr(agent, "run"):
-            raise TypeError("Agent does not have a run method")
+            raise TypeError(
+                "Agent does not have a run method"
+            )
 
         return agent.run(**kwargs)
 
+
+# =====================================
+# REGISTER ALL AGENTS
+# =====================================
 
 agent_manager = AgentManager()
 
