@@ -1,7 +1,5 @@
 
 import os
-from google import genai
-from google.genai import types
 
 
 class BaseProvider:
@@ -12,20 +10,23 @@ class BaseProvider:
         )
 
 
-class DemoProvider(BaseProvider):
+class OfflineProvider(BaseProvider):
 
     def generate(self, message, language, personality, history):
+
         return (
-            "JARVIS received your message: "
-            + message
-            + ". Demo AI is active."
+            "ASHAR JARVIS is currently in offline mode. "
+            "Your message was received, but an AI model "
+            "is not available right now."
         )
 
 
 class GeminiProvider(BaseProvider):
 
     def __init__(self):
+
         self.api_key = os.getenv("GEMINI_API_KEY")
+
         self.model = os.getenv(
             "AI_MODEL",
             "gemini-2.5-flash"
@@ -39,19 +40,24 @@ class GeminiProvider(BaseProvider):
     def generate(
         self,
         message,
-        language,
-        personality,
-        history
+        language="hinglish",
+        personality="professional",
+        history=None
     ):
+
+        from google import genai
+        from google.genai import types
+
+        history = history or []
 
         system_instruction = (
             "You are ASHAR JARVIS, a professional personal AI assistant. "
             "Address the user as Ashar. "
-            "Respond in the requested language: " + language + ". "
-            "Your personality should be: " + personality + ". "
-            "You can understand Hindi, English and Hinglish. "
-            "Be helpful, accurate, clear and respectful. "
-            "Never pretend to have performed an action you did not perform."
+            "Respond in: " + language + ". "
+            "Personality: " + personality + ". "
+            "Understand Hindi, English and Hinglish. "
+            "Be accurate, clear and respectful. "
+            "Never claim an action was completed unless it was."
         )
 
         contents = []
@@ -89,30 +95,37 @@ class GeminiProvider(BaseProvider):
         })
 
         try:
-            with genai.Client(
-                api_key=self.api_key
-            ) as client:
 
-                response = client.models.generate_content(
-                    model=self.model,
-                    contents=contents,
-                    config=types.GenerateContentConfig(
-                        system_instruction=system_instruction,
-                        temperature=0.7,
-                        max_output_tokens=1500
-                    )
+            client = genai.Client(
+                api_key=self.api_key
+            )
+
+            response = client.models.generate_content(
+                model=self.model,
+                contents=contents,
+                config=types.GenerateContentConfig(
+                    system_instruction=system_instruction,
+                    temperature=0.7,
+                    max_output_tokens=1500
                 )
+            )
 
             if not response.text:
-                return "I couldn't generate a response. Please try again."
+                raise RuntimeError(
+                    "The AI returned an empty response."
+                )
 
             return response.text
 
         except Exception as error:
-            print("Gemini API error:", str(error))
+
+            print(
+                "Gemini API error:",
+                str(error)
+            )
 
             raise RuntimeError(
-                "Gemini request failed. Check API key, model, quota and connection."
+                "Gemini is currently unavailable."
             ) from error
 
 
@@ -125,6 +138,7 @@ class OpenAICompatibleProvider(BaseProvider):
         personality,
         history
     ):
+
         raise RuntimeError(
             "OpenAI-compatible provider is not configured."
         )
@@ -134,11 +148,11 @@ def get_ai_provider():
 
     provider_name = os.getenv(
         "AI_PROVIDER",
-        "demo"
+        "offline"
     ).lower()
 
-    if provider_name == "demo":
-        return DemoProvider()
+    if provider_name == "offline":
+        return OfflineProvider()
 
     if provider_name == "gemini":
         return GeminiProvider()
@@ -155,12 +169,12 @@ def get_provider_status():
 
     provider_name = os.getenv(
         "AI_PROVIDER",
-        "demo"
+        "offline"
     ).lower()
 
     model_name = os.getenv(
         "AI_MODEL",
-        "gemini-2.5-flash"
+        "not-selected"
     )
 
     if provider_name == "gemini":
@@ -173,20 +187,25 @@ def get_provider_status():
             "provider": "gemini",
             "model": model_name,
             "status": (
-                "configured" if configured else "missing_api_key"
+                "configured_not_tested"
+                if configured
+                else "missing_api_key"
             ),
-            "real_ai_connected": False
+            "real_ai_connected": False,
+            "note": "API connectivity has not been tested."
         }
 
-    if provider_name == "demo":
+    if provider_name == "offline":
+
         return {
-            "provider": "demo",
-            "model": "demo-model",
+            "provider": "offline",
+            "model": "independent",
             "status": "active",
             "real_ai_connected": False
         }
 
     if provider_name == "openai":
+
         return {
             "provider": "openai",
             "model": model_name,
